@@ -19,3 +19,9 @@ Then run the RL Agent:
 ```shell script
 python main.py
 ```
+
+To run our Agar.io clone:
+
+```shell script
+python agario-game/agario.py
+```
