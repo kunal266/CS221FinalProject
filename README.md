@@ -3,7 +3,9 @@
 Fist install the dependencies in a conda environment:
 
 ```shell script
-conda env create --file environment.yaml
+conda create --name agario python=3
+conda activate agario
+pip install -r requirements.txt
 ```
 
 Next, install the Agario gym environment:
