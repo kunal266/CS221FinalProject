@@ -9,6 +9,7 @@ random.seed(42)
 FRAME_RATE = 60
 WORLD_SIZE = 3000
 SCREEN_WIDTH, SCREEN_HEIGHT = (1000, 700)
+WALL_DELTA = 20
 INITIAL_ZOOM = 10
 SURFACE_COLOR = (242, 251, 255)
 GRID_COLOR = (230, 240, 240)
@@ -61,6 +62,14 @@ class Cell:
         self.surface = surface
         self.color = color
 
+    @classmethod
+    def new_random_cell(cls, surface):
+        x = random.randint(WALL_DELTA, WORLD_SIZE - WALL_DELTA)
+        y = random.randint(WALL_DELTA, WORLD_SIZE - WALL_DELTA)
+        mass = random.randint(MIN_CELL_MASS, MAX_CELL_MASS)
+        color = random.choice(CELL_COLORS)
+        return cls(surface, x, y, mass, color)
+
     @property
     def radius(self):
         return int(self.mass) ** RADIUS_MASS_EXPONENT
@@ -102,6 +111,7 @@ class Player(Cell):
                 if Cell.distance(cell, self) < self.radius:
                     self.add_mass(cell.mass)
                     cells.remove(cell)
+                    cells.append(Cell.new_random_cell(self.surface))
 
     def add_mass(self, mass):
         extra_mass = mass * math.exp(-MASS_UPDATE_SPEED * (self.mass - MIN_CELL_MASS))
@@ -131,35 +141,24 @@ class Player(Cell):
         within_y_max = WORLD_SIZE >= y + radius
         return within_x_min, within_x_max, within_y_min, within_y_max
 
-
 class AgarioGame:
     def __init__(self):
         self.surface = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         pygame.display.set_caption("Agar.io")
-
         self.font = pygame.font.SysFont(None, FONT_SIZE)
-
         self.clock = pygame.time.Clock()
-        self.cells = self.create_random_cells(NUM_CELLS)
+        self.cells = []
+        self.camera = Camera()
         self.player = Player(
             surface=self.surface,
             x=WORLD_SIZE // 2, y=WORLD_SIZE // 2,
             mass=START_MASS, color=random.choice(PLAYER_COLORS),
             speed=MAX_PLAYER_SPEED
         )
-        self.camera = Camera()
+        self.create_random_cells(NUM_CELLS)
 
-    def create_random_cells(self, num_cells) -> List[Cell]:
-        cells = []
-        for _ in range(num_cells):
-            delta = 20
-            x = random.randint(delta, WORLD_SIZE - delta)
-            y = random.randint(delta, WORLD_SIZE - delta)
-            mass = random.randint(MIN_CELL_MASS, MAX_CELL_MASS)
-            color = random.choice(CELL_COLORS)
-            cell = Cell(self.surface, x, y, mass, color)
-            cells.append(cell)
-        return cells
+    def create_random_cells(self, num_cells) -> None:
+        self.cells = [Cell.new_random_cell(self.surface) for _ in range(num_cells)]
 
     def draw_grid(self):
         for i in range(0, WORLD_SIZE + 1, WORLD_SIZE // 100):
@@ -186,7 +185,6 @@ class AgarioGame:
         return angle
 
     def step(self, action):
-        self.clock.tick(FRAME_RATE)
         self.player.update(action, self.cells)
         self.camera.update(self.player)
 
@@ -205,6 +203,7 @@ class AgarioGame:
             action = self.get_next_action()
             self.step(action)
             self.render()
+            self.clock.tick(FRAME_RATE)
 
 
 if __name__ == '__main__':
