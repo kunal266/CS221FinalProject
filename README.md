@@ -25,3 +25,9 @@ To run our Agar.io clone:
 ```shell script
 python gym-agario/gym_agario/envs/agario.py
 ```
+
+### Greedy agent:
+
+<p align="center">
+<img src="https://media.giphy.com/media/loNEBr33mIkjgdaQ1q/giphy.gif" alt='greedy agent' />
+</p>
