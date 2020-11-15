@@ -1,4 +1,4 @@
-# CS221 Final Project: Deep Reinforcement Leaning for playing Agar.io
+# CS221 Final Project: Deep Reinforcement Learning for playing Agar.io
 
 Fist install the dependencies in a conda environment:
 
