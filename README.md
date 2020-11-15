@@ -23,5 +23,5 @@ python main.py
 To run our Agar.io clone:
 
 ```shell script
-python agario-game/agario.py
+python gym-agario/gym_agario/envs/agario.py
 ```
