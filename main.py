@@ -1,6 +1,7 @@
 import math
 import matplotlib.pyplot as plt
 from agario_env import AgarioEnv
+import torch
 
 RENDER = True
 
