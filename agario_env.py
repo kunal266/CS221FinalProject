@@ -7,8 +7,8 @@ from agario import AgarioGame
 class AgarioEnv(gym.Env):
     metadata = {'render.modes': ['human']}
 
-    def __init__(self):
-        self.game = AgarioGame(render=True, speed_scale=2, display_text=True)
+    def __init__(self, render: bool, speed_scale: float, display_text: bool):
+        self.game = AgarioGame(render=render, speed_scale=speed_scale, display_text=display_text)
         self.skip_frames = 1
 
     def seed(self, seed=None):

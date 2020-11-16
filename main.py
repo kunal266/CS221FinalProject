@@ -4,7 +4,7 @@ from agario_env import AgarioEnv
 import torch
 
 RENDER = True
-
+DISPLAY_TEXT = True
 
 class Agent:
     def __init__(self, initial_state):
@@ -33,7 +33,7 @@ class Agent:
 
 
 def main():
-    env = AgarioEnv()
+    env = AgarioEnv(render=RENDER, speed_scale=1, display_text=DISPLAY_TEXT)
     env.seed(40)
     state = env.reset()
     done = False
