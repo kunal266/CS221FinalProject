@@ -3,15 +3,9 @@
 Fist install the dependencies in a conda environment:
 
 ```shell script
-conda create --name agario python=3
+conda create --name agario python=3.8
 conda activate agario
 pip install -r requirements.txt
-```
-
-Next, install the Agario gym environment:
-
-```shell script
-pip install -e gym-agario
 ```
 
 Then run the RL Agent:
@@ -23,7 +17,7 @@ python main.py
 To run our Agar.io clone:
 
 ```shell script
-python gym-agario/gym_agario/envs/agario.py
+python agario.py
 ```
 
 ### Greedy agent:

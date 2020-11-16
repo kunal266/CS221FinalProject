@@ -1,14 +1,14 @@
 import gym
 from gym import error, spaces, utils
 from gym.utils import seeding
-from gym_agario.envs.agario import AgarioGame
+from agario import AgarioGame
 
 
 class AgarioEnv(gym.Env):
     metadata = {'render.modes': ['human']}
 
     def __init__(self):
-        self.game = AgarioGame()
+        self.game = AgarioGame(render=True, speed_scale=2, display_text=True)
         self.skip_frames = 1
 
     def seed(self, seed=None):
@@ -32,4 +32,4 @@ class AgarioEnv(gym.Env):
         self.game.render()
 
     def close(self):
-        pass
+        self.game.close()

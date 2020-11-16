@@ -9,10 +9,7 @@ import sys
 pygame.init()
 
 GENERAL_SCALE = 1
-SPEED_SCALE = 2
-RENDER = True
 CAMERA_SHOULD_FOLLOW_PLAYER = True
-DISPLAY_TEXT = True
 
 WORLD_SIZE = 1000
 SCREEN_WIDTH, SCREEN_HEIGHT = (1000, 1000)
@@ -44,8 +41,10 @@ COLORS = {
     'red': (255, 0, 0),
 }
 FONT_SIZE = 24
-if DISPLAY_TEXT:
-    FONT = pygame.font.SysFont(None, FONT_SIZE)
+
+# set these on AgarioGame's initialization, not here
+FONT = None
+DISPLAY_TEXT = None
 
 if GENERAL_SCALE != 1:
     GRID_STEP = int(GRID_STEP * GENERAL_SCALE)
@@ -56,8 +55,10 @@ if GENERAL_SCALE != 1:
     NUM_CELLS = int(NUM_CELLS / GENERAL_SCALE)
     WALL_DELTA = int(WALL_DELTA / GENERAL_SCALE)
 
-if SPEED_SCALE != 1:
-    MAX_PLAYER_SPEED *= SPEED_SCALE
+
+def SCALE_ALL_SPEEDS(speed_scale: float) -> None:
+    global MAX_PLAYER_SPEED
+    MAX_PLAYER_SPEED *= speed_scale
 
 
 def DRAW_TEXT(surface, text, position, color=COLORS['black']) -> None:
@@ -241,6 +242,12 @@ class Player(Cell):
         visible_adversaries = list(filter(lambda cell: cell is not self and self.camera.is_visible(cell), all_players))
         return visible_cells, visible_adversaries, self
 
+    def __str__(self):
+        return f'{self.name}: {self.score}'
+
+    def __repr__(self):
+        return self.__str__()
+
 
 class MainPlayer(Player):
     def __init__(self, surface, x, y, mass, color, name):
@@ -287,7 +294,7 @@ class GreedyAdversary(Player):
 
 
 class AgarioGame:
-    def __init__(self):
+    def __init__(self, render: bool, speed_scale: float, display_text: bool):
         self.surface = None
         self.clock = None
         self.player = None
@@ -296,25 +303,35 @@ class AgarioGame:
         self.leaderboard_surface = None
         self.camera = None
         self.game_ended = False
+        self.should_render = render
+        global FONT, DISPLAY_TEXT
+        SCALE_ALL_SPEEDS(speed_scale)
+        if display_text:
+            if not render:
+                raise Exception('display_text can only be set when render is true')
+            DISPLAY_TEXT = display_text
+            FONT = pygame.font.SysFont(None, FONT_SIZE)
         self.reset()
 
     def reset(self):
-        self.surface = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-        pygame.display.set_caption("Agar.io")
+        if self.should_render:
+            self.surface = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+            pygame.display.set_caption("Agar.io")
+            if DISPLAY_TEXT:
+                self.leaderboard_surface = pygame.Surface(LEADERBOARD_SHAPE, pygame.SRCALPHA)
         self.clock = pygame.time.Clock()
         self.cells: List[Cell] = []
         self.adversaries: List[GreedyAdversary] = []
         self.player = MainPlayer.new_random_main_player(self.surface)
         self.cells = self.create_random_cells(NUM_CELLS)
         self.adversaries = self.create_random_adversaries(NUM_ADVERSARIES)
-        if DISPLAY_TEXT:
-            self.leaderboard_surface = pygame.Surface(LEADERBOARD_SHAPE, pygame.SRCALPHA)
         if CAMERA_SHOULD_FOLLOW_PLAYER:
             self.camera = self.player.camera
         else:
             self.camera = Camera()
 
-    def seed(self, seed):
+    @staticmethod
+    def seed(seed):
         random.seed(seed)
 
     def respawn_player(self):
@@ -345,6 +362,8 @@ class AgarioGame:
             pygame.draw.line(self.surface, GRID_COLOR, vertical_start, vertical_end)
 
     def get_next_action(self):
+        if not self.should_render:
+            return 0
         mouse_x, mouse_y = pygame.mouse.get_pos()
         abs_mouse_x, abs_mouse_y = self.camera.transform_pos_inv(mouse_x, mouse_y)
         mouse_x_rel_player, mouse_y_rel_player = self.player.camera.transform_and_center_pos(abs_mouse_x, abs_mouse_y)
@@ -369,8 +388,13 @@ class AgarioGame:
         if len(self.adversaries) < NUM_ADVERSARIES:
             self.adversaries += self.create_random_adversaries(NUM_ADVERSARIES - len(self.adversaries))
 
+    def close(self):
+        pygame.quit()
+
     def step(self, action):
         if self.game_ended:
+            # pygame.quit()
+            # sys.exit()
             return
         self.player.update(action, self.game_state)
         for adversary in self.adversaries:
@@ -383,6 +407,7 @@ class AgarioGame:
             # self.respawn_player()
 
     def render(self):
+        assert self.should_render
         self.surface.fill(SURFACE_COLOR)
         self.draw_grid()
         self.player.draw_player(self.camera)
@@ -394,6 +419,11 @@ class AgarioGame:
             self.draw_leaderboard()
         pygame.display.flip()
 
+    def get_sorted_players(self):
+        all_players = self.adversaries + [self.player]
+        all_players.sort(key=lambda x: x.score, reverse=True)
+        return all_players
+
     def draw_leaderboard(self):
         # Draw score in lower-left corner
         DRAW_TEXT(self.surface, text=f'Score: {self.player.score}',
@@ -404,8 +434,7 @@ class AgarioGame:
         pos_x, pos_y = SCREEN_WIDTH - width, SCREEN_HEIGHT // 20
         self.surface.blit(self.leaderboard_surface, (pos_x, pos_y))
         # Add leading scores
-        all_players = self.adversaries + [self.player]
-        all_players.sort(key=lambda x: x.score, reverse=True)
+        all_players = self.get_sorted_players()
         top_10 = all_players[:10]
         for i, player in enumerate(top_10):
             color = COLORS['red'] if player is self.player else COLORS['black']
@@ -420,15 +449,22 @@ class AgarioGame:
                       color=COLORS['red'])
 
     def run(self):
+        i = 0
+        miliseconds = 0
         while True:
             action = self.get_next_action()
             self.step(action)
-            if RENDER:
+            if self.should_render:
                 self.render()
-            dt = self.clock.tick()
-            # print(f'dt = {dt}')
+            else:
+                print(self.get_sorted_players()[:5])
+            miliseconds += self.clock.tick()
+            i += 1
+            if miliseconds >= 1000:
+                # print(f'fps = {i}')
+                i = miliseconds = 0
 
 
 if __name__ == '__main__':
-    game = AgarioGame()
+    game = AgarioGame(render=True, speed_scale=2, display_text=False)
     game.run()

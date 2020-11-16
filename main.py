@@ -1,6 +1,6 @@
-import gym
 import math
 import matplotlib.pyplot as plt
+from agario_env import AgarioEnv
 
 RENDER = True
 
@@ -32,7 +32,7 @@ class Agent:
 
 
 def main():
-    env = gym.make('gym_agario:agario-v0')
+    env = AgarioEnv()
     env.seed(40)
     state = env.reset()
     done = False
