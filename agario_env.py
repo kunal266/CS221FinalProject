@@ -18,28 +18,51 @@ class AgarioEnv(gym.Env):
     metadata = {'render.modes': ['human']}
 
     def __init__(self,
-                 render: bool,
+                 should_render: bool,
                  speed_scale: float,
                  display_text: bool,
-                 grid_resolution: int):
-        self.game = AgarioGame(render=render, speed_scale=speed_scale, display_text=display_text)
+                 should_display: bool,
+                 grid_resolution: int,
+                 skip_frames: int,
+                 max_steps: int):
+        self.should_render = should_render
+        self.should_display = should_display
+        self.game = AgarioGame(should_render=should_render,
+                               speed_scale=speed_scale,
+                               display_text=display_text,
+                               should_display=should_display)
         self.grid_resolution = grid_resolution
+        self.action_space = spaces.Discrete(16)
+        self.skip_frames = skip_frames
+        self.max_steps = max_steps
+        self.steps = 0
 
     def seed(self, seed=None):
         self.game.seed(seed)
 
-    def step(self, action) -> Tuple[State, Reward, Done, Info]:
+    def get_angle_from_action(self, action: int) -> float:
+        return action * 2 * math.pi / (self.action_space.n + 1)
+
+    def step(self, action: int) -> Tuple[State, Reward, Done, Info]:
+        angle = self.get_angle_from_action(action)
         old_mass = self.game.player.mass
-        self.game.step(action)
+        for _ in range(self.skip_frames):
+            if self.should_display:
+                self.render()
+            self.game.step(angle)
         cells, adversaries, player = self.game.get_player_state()
         state = self.get_state(cells, adversaries, player)
         new_mass = self.game.player.mass
         reward = new_mass - old_mass
         done = self.game.game_ended
-        return state if not done else None, reward, done, 'info'
+        self.steps += 1
+        if self.steps > self.max_steps:
+            done = True
+        return state, reward, done, 'info'
 
     def reset(self):
         self.game.reset()
+        self.steps = 0
         cells, adversaries, player = self.game.get_player_state()
         return self.get_state(cells, adversaries, player)
 
@@ -61,7 +84,7 @@ class AgarioEnv(gym.Env):
         return grid
 
     def render(self, mode='human'):
-        self.game.render()
+        return self.game.render()
 
     def close(self):
         self.game.close()

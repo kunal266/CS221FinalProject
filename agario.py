@@ -296,7 +296,11 @@ class GreedyAdversary(Player):
 
 
 class AgarioGame:
-    def __init__(self, render: bool, speed_scale: float, display_text: bool):
+    def __init__(self,
+                 should_render: bool,
+                 speed_scale: float,
+                 display_text: bool,
+                 should_display: bool):
         self.surface = None
         self.clock = None
         self.player = None
@@ -305,12 +309,15 @@ class AgarioGame:
         self.leaderboard_surface = None
         self.camera = None
         self.game_ended = None
-        self.should_render = render
+        self.should_render = should_render
+        self.should_display = should_display
         global FONT, DISPLAY_TEXT
         SCALE_ALL_SPEEDS(speed_scale)
+        if should_display and not self.should_render:
+            raise Exception('should_display can only be true when should_render is')
         if display_text:
-            if not render:
-                raise Exception('display_text can only be set when render is true')
+            if not should_render and should_display:
+                raise Exception('display_text can only be set when should_render and should_display are true')
             DISPLAY_TEXT = display_text
             FONT = pygame.font.SysFont(None, FONT_SIZE)
         self.reset()
@@ -319,7 +326,7 @@ class AgarioGame:
         self.game_ended = False
         if self.should_render:
             self.surface = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-            pygame.display.set_caption("Agar.io")
+            # pygame.display.set_caption("Agar.io")
             if DISPLAY_TEXT:
                 self.leaderboard_surface = pygame.Surface(LEADERBOARD_SHAPE, pygame.SRCALPHA)
         self.clock = pygame.time.Clock()
@@ -420,7 +427,10 @@ class AgarioGame:
             adversary.draw_player(self.camera)
         if DISPLAY_TEXT:
             self.draw_leaderboard()
-        pygame.display.flip()
+        if self.should_display:
+            pygame.display.flip()
+        image_array = pygame.surfarray.array3d(self.surface)
+        return image_array
 
     def get_sorted_players(self):
         all_players = self.adversaries + [self.player]
@@ -469,5 +479,8 @@ class AgarioGame:
 
 
 if __name__ == '__main__':
-    game = AgarioGame(render=True, speed_scale=2, display_text=False)
+    game = AgarioGame(should_render=True,
+                      speed_scale=2,
+                      display_text=False,
+                      should_display=True)
     game.run()
