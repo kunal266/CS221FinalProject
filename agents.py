@@ -79,7 +79,8 @@ class Greedy(Agent):
 
     def get_action(self, state: State) -> float:
         grid, mass, zoom = state
-        grid = grid[0] + grid[1]
+        # grid = grid[0] + grid[1]
+        grid = grid[0]
         self.mass_path.append(mass)
         i, j = self.get_best_indices(grid)
         angle = self.get_angle_from_grid(grid.shape, i, j)
