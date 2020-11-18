@@ -24,7 +24,7 @@ class Agent:
         mean_max_mass = np.mean(self.max_masses)
         median_max_mass = np.median(self.max_masses)
         std_max_mass = np.std(self.max_masses)
-        print(f'{type(self)} mean = {mean_max_mass}, std: {std_max_mass}, median = {mean_max_mass}')
+        print(f'{type(self)} mean = {mean_max_mass}, std: {std_max_mass}, median = {median_max_mass}')
 
     def get_action(self, state):
         raise NotImplementedError()

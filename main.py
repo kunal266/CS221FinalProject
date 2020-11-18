@@ -4,15 +4,17 @@ from agario_env import AgarioEnv, State
 from agents import Greedy, DQNAgent, RandomAgent
 import torch
 from datetime import datetime
+import numpy as np
 
-RENDER = True
+RENDER = False
 DISPLAY_TEXT = False
 SPEED_SCALE = 2
 # GRID_RESOLUTION = 84
 GRID_RESOLUTION = 32
 NUM_SKIP_FRAMES = 10
 ACTION_DISCRETIZATION = 16
-NUM_EPISODES = 500
+NUM_EPISODES = 500//100
+WEIGHTS_SAVE_EPISODE_STEP = NUM_EPISODES // 2
 MAX_STEPS = int(200)
 
 
@@ -51,7 +53,7 @@ def main_DQN():
                      width=GRID_RESOLUTION,
                      input_channels=2,
                      num_actions=ACTION_DISCRETIZATION,
-                     loadpath='model_210_2020-11-17_18:20:07.154462_episodes.model')
+                     loadpath='')
     # env.seed(41)
     # agent.seed(41)
     for episode in range(NUM_EPISODES):
@@ -75,22 +77,29 @@ def main_DQN():
             agent.memory.push(state, raw_action, new_state, reward)
             agent.optimize()
             if done:
-                print(f'Episode done, max_mass = {state.mass}')
+                print(f'Episode {episode} done, max_mass = {state.mass}')
                 agent.max_masses.append(state.mass)
+                agent.print_final_stats()
             if num_steps % agent.TARGET_UPDATE == 0:
                 # print(f'UPDATING TARGET')
                 agent.target_net.load_state_dict(agent.policy_net.state_dict())
             state = new_state
+        if episode % WEIGHTS_SAVE_EPISODE_STEP == 0:
+            torch.save(agent.policy_net.state_dict(),
+               f'DQN_weights/model_{episode}_{str(datetime.now()).replace(" ", "_")}_episodes.model')
+            np.savetxt(f'DQN_weights/model_{episode}_{str(datetime.now()).replace(" ", "_")}_episodes.performance',
+                        np.array(agent.max_masses))
     print(f'Complete')
     torch.save(agent.policy_net.state_dict(),
-               f'model_{210 + NUM_EPISODES}_{str(datetime.now()).replace(" ", "_")}_episodes.model')
-    # agent.plot_episoded_max_mass()
+               f'model_{NUM_EPISODES}_{str(datetime.now()).replace(" ", "_")}_episodes.model')
+    np.savetxt(f'DQN_weights/model_{NUM_EPISODES}_{str(datetime.now()).replace(" ", "_")}_episodes.performance',
+                        np.array(agent.max_masses))
     agent.print_final_stats()
     env.close()
 
 
 def main_DQN_plus_greedy():
-    GREEDY_TOTAL_NUM_EPISODES = 10
+    GREEDY_TOTAL_NUM_EPISODES = 1000
     GREEDY_NUM_EPISODES = GREEDY_TOTAL_NUM_EPISODES // 3
     env = AgarioEnv(render=RENDER,
                     speed_scale=SPEED_SCALE,
@@ -147,5 +156,6 @@ def main_DQN_plus_greedy():
 
 
 if __name__ == '__main__':
+    # main_random()
     main_DQN()
     # main_DQN_plus_greedy()
