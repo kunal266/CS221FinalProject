@@ -19,8 +19,10 @@ WALL_DELTA = 20
 INITIAL_ZOOM = 9
 SURFACE_COLOR = (242, 251, 255)
 GRID_COLOR = (230, 240, 240)
-NUM_CELLS = WORLD_SIZE ** 2 // int(1e3)
-NUM_ADVERSARIES = 14
+# NUM_CELLS = WORLD_SIZE ** 2 // int(1e3)
+NUM_CELLS = 3*WORLD_SIZE ** 2 // int(1e3)
+# NUM_ADVERSARIES = 14
+NUM_ADVERSARIES = 0
 START_MASS = 10
 MIN_CELL_MASS = 1
 MAX_CELL_MASS = 2
@@ -302,7 +304,7 @@ class AgarioGame:
         self.cells = None
         self.leaderboard_surface = None
         self.camera = None
-        self.game_ended = False
+        self.game_ended = None
         self.should_render = render
         global FONT, DISPLAY_TEXT
         SCALE_ALL_SPEEDS(speed_scale)
@@ -314,6 +316,7 @@ class AgarioGame:
         self.reset()
 
     def reset(self):
+        self.game_ended = False
         if self.should_render:
             self.surface = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
             pygame.display.set_caption("Agar.io")
