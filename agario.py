@@ -481,6 +481,6 @@ class AgarioGame:
 if __name__ == '__main__':
     game = AgarioGame(should_render=True,
                       speed_scale=2,
-                      display_text=False,
+                      display_text=True,
                       should_display=True)
     game.run()

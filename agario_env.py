@@ -43,6 +43,7 @@ class AgarioEnv(gym.Env):
     def get_angle_from_action(self, action: int) -> float:
         return action * 2 * math.pi / (self.action_space.n + 1)
 
+    #step and reward function is defined here 
     def step(self, action: int) -> Tuple[State, Reward, Done, Info]:
         angle = self.get_angle_from_action(action)
         old_mass = self.game.player.mass

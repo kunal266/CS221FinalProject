@@ -1,4 +1,3 @@
-# CS221 Final Project: Deep Reinforcement Learning for playing Agar.io
 
 Fist install the dependencies in a conda environment:
 
@@ -17,7 +16,7 @@ python main.py
 To run our Agar.io clone:
 
 ```shell script
-python agario.py
+python3 agario.py
 ```
 
 ### Greedy agent:
